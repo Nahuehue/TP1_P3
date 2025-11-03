@@ -15,7 +15,7 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
 import logica.Celda;
-import logica.GeneradorTableros;
+import logica.Generador;
 import logica.Pistas;
 import logica.Tablero;
 import logica.Validador;
@@ -31,9 +31,6 @@ public class VentanaJuego extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -46,6 +43,9 @@ public class VentanaJuego extends JFrame {
 			}
 		});
 	}
+	private JPanel panelGrillaDebug = new JPanel();;
+	private JButton[][] botonesDebug;
+	private boolean isDebugOn = false;
 	
 	private JButton[][] botones;
 	private Tablero tablero; // Lógica
@@ -60,9 +60,6 @@ public class VentanaJuego extends JFrame {
 	private int puntuacion;
 	private Timer timer;
 
-	/**
-	 * Create the frame.
-	 */
 	public VentanaJuego() {
 		this(5); // Tamaño por defecto
 	}
@@ -71,13 +68,18 @@ public class VentanaJuego extends JFrame {
 		this.size = size;
 		this.botones = new JButton[size][size];
 		this.tablero = new Tablero(size);
-		this.solucion = GeneradorTableros.generarTablero(size);
+		this.solucion = Generador.generarTablero(size);
 		this.tiempoInicio = System.currentTimeMillis();
 		this.puntuacion = 0;
+		if (isDebugOn)
+			this.botonesDebug = new JButton[size][size];
 		
 		setTitle("Nanograma - " + size + "x" + size);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 400 + size * 20, 350 + size * 20);
+		if (isDebugOn)
+			setBounds(100, 100, 400 + size * 55, 400 + size * 30);
+		else
+			setBounds(100, 100, 450 + size * 20, 400 + size * 20);
 		getContentPane().setLayout(null);
 		getContentPane().setBackground(new Color(240, 240, 240));
 		
@@ -136,28 +138,33 @@ public class VentanaJuego extends JFrame {
 		
 		// Panel de pistas de filas
 		panelFilas = new JPanel();
-		panelFilas.setBounds(10, 90, 80, size * 30);
+		panelFilas.setBounds(10, 100, 80, size * 40);
 		panelFilas.setBackground(new Color(220, 220, 220));
 		panelFilas.setLayout(new GridLayout(size, 1, 2, 2));
 		getContentPane().add(panelFilas);
 		
 		// Panel de pistas de columnas
 		panelColumnas = new JPanel();
-		panelColumnas.setBounds(90, 60, size * 30, 30);
+		panelColumnas.setBounds(90, 60, size * 40, 40);
 		panelColumnas.setBackground(new Color(220, 220, 220));
 		panelColumnas.setLayout(new GridLayout(1, size, 2, 2));
 		getContentPane().add(panelColumnas);
 		
 		// Panel de la grilla de juego
 		JPanel panelGrilla = new JPanel();
-		panelGrilla.setBounds(90, 90, size * 30, size * 30);
+		panelGrilla.setBounds(90, 100, size * 40, size * 40);
 		panelGrilla.setBackground(Color.WHITE);
 		panelGrilla.setLayout(new GridLayout(size, size, 1, 1));
 		getContentPane().add(panelGrilla);
 		
 		// Panel de controles
 		JPanel panelControles = new JPanel();
-		panelControles.setBounds(10, 90 + size * 30 + 10, getWidth() - 20, 50);
+		if (size == 5)
+			panelControles.setBounds(0, 110 + size * 40 , getWidth() + 40, 50);
+		if (size == 7)
+			panelControles.setBounds(0, 110 + size * 40 , getWidth(), 50);
+		if (size == 10)
+			panelControles.setBounds(0, 110 + size * 40 , getWidth() - 60, 50);
 		panelControles.setBackground(new Color(240, 240, 240));
 		getContentPane().add(panelControles);
 		
@@ -187,11 +194,18 @@ public class VentanaJuego extends JFrame {
 		btnReiniciar.addActionListener(e -> reiniciarJuego());
 		btnNuevo.addActionListener(e -> nuevoJuego());
 		
+		
+		
 		// Crear los botones de la grilla
-		crearBotonesGrilla(panelGrilla);
+		crearBotonesGrilla(panelGrilla);		
+		
+		if (isDebugOn)
+			crearGrillaDebug();
 		
 		// Actualizar las pistas
 		actualizarPistas(solucion);
+		
+		
 	}
 	
 	private void crearBotonesGrilla(JPanel panelGrilla) {
@@ -218,18 +232,73 @@ public class VentanaJuego extends JFrame {
 			}
 		}
 	}
+	//---------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------- DEBUG -----------------------------------------------------------
+	//---------------------------------------------------------------------------------------------------------------
+	private void crearGrillaDebug() { 
+		//120 en vez de 90 para que este separado al menos 1 cuadrito de la grilla del juego, 
+		//y size*30 para que se adapte a los distintos tamaños grilla
+		panelGrillaDebug.setBounds(120 + (size * 40), 90, size * 40, size * 40);
+		panelGrillaDebug.setBackground(Color.WHITE);
+		panelGrillaDebug.setLayout(new GridLayout(size, size, 1, 1));
+		getContentPane().add(panelGrillaDebug);
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {	
+				JButton btn = new JButton();
+				btn.setFont(new Font("Arial", Font.BOLD, 12));
+				btn.setFocusPainted(false);				
+				if (solucion[i][j] == 1) 
+					btn.setBackground(Color.BLACK);				
+				else 
+					btn.setBackground(Color.WHITE);
+				botonesDebug[i][j] = btn;
+				panelGrillaDebug.add(btn);				
+			}
+		}
+	}
+	
+	private void actualizarSolucionesDebug(int [][] solucion) {
+		panelGrillaDebug.removeAll();
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {	
+				JButton btn = new JButton();
+				btn.setFont(new Font("Arial", Font.BOLD, 12));
+				btn.setFocusPainted(false);				
+				if (solucion[i][j] == 1) 
+					btn.setBackground(Color.BLACK);				
+				else 
+					btn.setBackground(Color.WHITE);
+				botonesDebug[i][j] = btn;
+				panelGrillaDebug.add(btn);				
+			}
+		}
+	}
+	
+	private void limpiarBotonesDebug() {
+		// Limpiar el estado de todos los botones
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				botonesDebug[i][j].setBackground(Color.WHITE);
+				botonesDebug[i][j].setText("");
+			}
+		}
+	}
+	
+	//---------------------------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------------------------
 	
 	// Actualiza el estado de las celdas
 	private void actualizarBoton(JButton boton, Celda celda) {
 		if (celda.getEstado() == Celda.BLANCO) {
-			boton.setBackground(Color.LIGHT_GRAY);
+			boton.setBackground(Color.WHITE);
 			boton.setText("");
 		} else if (celda.getEstado() == Celda.NEGRO) {
 			boton.setBackground(Color.BLACK);
 			boton.setText("");
 		} else if (celda.getEstado() == Celda.X) {
 			boton.setBackground(Color.WHITE);
-			boton.setText("X");
+			boton.setText("x");
 		}
 	}
 	
@@ -260,7 +329,7 @@ public class VentanaJuego extends JFrame {
 	        String texto = columna.stream()
 	                              .map(String::valueOf)
 	                              .reduce((a,b) -> a + " " + b)
-	                              .orElse("0");
+	                              .orElse("0") + "\n";
 	        JLabel lblCol = new JLabel(texto, SwingConstants.CENTER);
 	        lblCol.setFont(new Font("Arial", Font.BOLD, 10));
 	        lblCol.setBackground(Color.WHITE);
@@ -272,6 +341,7 @@ public class VentanaJuego extends JFrame {
 	    panelFilas.repaint();
 	    panelColumnas.revalidate();
 	    panelColumnas.repaint();
+	    //Muestra la grilla de soluciones del modo debug ---------------------------------------------------------------------
 	}
 	
 	private void comprobarSolucion() {
@@ -309,13 +379,7 @@ public class VentanaJuego extends JFrame {
 			puntuacion = 0;
 			tiempoInicio = System.currentTimeMillis();
 			
-			// Limpiar todos los botones
-			for (int i = 0; i < size; i++) {
-				for (int j = 0; j < size; j++) {
-					actualizarBoton(botones[i][j], tablero.getCelda(i, j));
-				}
-			}
-			
+			limpiarBotones();		
 			actualizarPuntuacion();
 		}
 	}
@@ -327,21 +391,31 @@ public class VentanaJuego extends JFrame {
 		
 		if (opcion == JOptionPane.YES_OPTION) {
 			// Generar un nuevo tablero con la misma dificultad
-			this.solucion = GeneradorTableros.generarTablero(size);
+			this.solucion = Generador.generarTablero(size);
 			this.tablero = new Tablero(size);
 			this.puntuacion = 0;
 			this.tiempoInicio = System.currentTimeMillis();
 			
-			// Limpiar todos los botones
-			for (int i = 0; i < size; i++) {
-				for (int j = 0; j < size; j++) {
-					actualizarBoton(botones[i][j], tablero.getCelda(i, j));
-				}
-			}
+			limpiarBotones();
 			
 			// Actualizar las pistas con el nuevo tablero
 			actualizarPistas(solucion);
 			actualizarPuntuacion();
+			// Actualizar las soluciones del modo debug
+			if (isDebugOn) {
+				limpiarBotonesDebug();
+		    	actualizarSolucionesDebug(solucion);
+		    }
+		}
+	}
+
+	private void limpiarBotones() {
+		// Limpiar el estado de todos los botones
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				botones[i][j].setBackground(Color.LIGHT_GRAY);
+				botones[i][j].setText("");
+			}
 		}
 	}
 	

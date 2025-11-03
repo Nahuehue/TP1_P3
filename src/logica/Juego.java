@@ -18,7 +18,7 @@ public class Juego {
 	 * @return Tablero con solución única
 	 */
 	public static int[][] getSolucion(int size) {
-		return GeneradorTableros.generarTablero(size);
+		return Generador.generarTablero(size);
 	}
 	
 	/**
