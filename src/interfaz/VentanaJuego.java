@@ -297,9 +297,12 @@ public class VentanaJuego extends JFrame {
 			boton.setBackground(Color.BLACK);
 			boton.setText("");
 		} else if (celda.getEstado() == Celda.X) {
-			boton.setBackground(Color.WHITE);
-			boton.setText("x");
-		}
+	        boton.setBackground(Color.WHITE);
+	        boton.setForeground(Color.RED); 
+	        boton.setFont(new Font("Arial", Font.BOLD, 9));
+	        boton.setText("x");
+	    }
+	
 	}
 	
 	private void actualizarPistas(int[][] solucion) {
