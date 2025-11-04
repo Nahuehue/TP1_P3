@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
+
 import logica.Celda;
 import logica.Generador;
 import logica.Pistas;
@@ -21,11 +22,13 @@ import logica.Tablero;
 import logica.Validador;
 
 import java.awt.GridLayout;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import java.util.Random;
 
 public class VentanaJuego extends JFrame {
 
@@ -47,15 +50,20 @@ public class VentanaJuego extends JFrame {
 	private JButton[][] botonesDebug;
 	private boolean isDebugOn = false;
 	
+	private JPanel panelGrillaAyuda = new JPanel();;
+	private JButton[][] botonesAyuda;
 	private JButton[][] botones;
 	private Tablero tablero; // Lógica
 	private int[][] solucion;
 	private int size;
+	private List<List<Integer>> ayudas = new ArrayList<>();
+	private int ayudasDadas = 0;
 	
 	private JPanel panelFilas;
 	private JPanel panelColumnas;
 	private JLabel lblTiempo;
 	private JLabel lblPuntuacion;
+	private JLabel lblAyudas;
 	private long tiempoInicio;
 	private int puntuacion;
 	private Timer timer;
@@ -71,15 +79,29 @@ public class VentanaJuego extends JFrame {
 		this.solucion = Generador.generarTablero(size);
 		this.tiempoInicio = System.currentTimeMillis();
 		this.puntuacion = 0;
-		if (isDebugOn)
-			this.botonesDebug = new JButton[size][size];
+		this.botonesDebug = new JButton[size][size];
+		this.botonesAyuda = new JButton[size][size];
 		
 		setTitle("Nanograma - " + size + "x" + size);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		if (isDebugOn)
-			setBounds(100, 100, 400 + size * 55, 400 + size * 30);
-		else
-			setBounds(100, 100, 450 + size * 20, 400 + size * 20);
+		if (size == 5) {
+			if (isDebugOn)
+				setBounds(100, 100, 550 + size * 55, 400 + size * 30);
+			else
+				setBounds(100, 100, 500 + size * 20, 400 + size * 20);
+		}
+		if (size == 7) {
+			if (isDebugOn)
+				setBounds(100, 100, 700 + size * 55, 400 + size * 30);
+			else
+				setBounds(100, 100, 650 + size * 20, 400 + size * 20);
+		}
+		if (size == 10) {
+			if (isDebugOn)
+				setBounds(100, 100, 900 + size * 55, 400 + size * 30);
+			else
+				setBounds(100, 100, 800 + size * 20, 400 + size * 20);
+		}
 		getContentPane().setLayout(null);
 		getContentPane().setBackground(new Color(240, 240, 240));
 		
@@ -116,6 +138,17 @@ public class VentanaJuego extends JFrame {
 		gbcPuntuacion.anchor = GridBagConstraints.CENTER;
 		gbcPuntuacion.insets = new Insets(5, 5, 5, 5);
 		panelSuperior.add(lblPuntuacion, gbcPuntuacion);
+		
+		// Ayudas
+		lblAyudas = new JLabel("Ayudas usadas:" + ayudasDadas + "/" + size);
+		lblAyudas.setFont(new Font("Arial", Font.BOLD, 14));
+		lblAyudas.setForeground(new Color(50, 50, 50));
+		GridBagConstraints gbcAyudas = new GridBagConstraints();
+		gbcAyudas.gridx = 50;
+		gbcAyudas.gridy = 0;
+		gbcAyudas.anchor = GridBagConstraints.CENTER;
+		gbcAyudas.insets = new Insets(5, 5, 5, 5);
+		panelSuperior.add(lblAyudas, gbcAyudas);
 		
 		// Boton de menu
 		JButton btnMenu = new JButton("Menu Principal");
@@ -189,12 +222,18 @@ public class VentanaJuego extends JFrame {
 		btnNuevo.setFocusPainted(false);
 		panelControles.add(btnNuevo);
 		
+		JButton btnPista = new JButton("Pista");
+		btnPista.setFont(new Font("Arial", Font.BOLD, 14));
+		btnPista.setBackground(new Color(50, 100, 200));
+		btnPista.setForeground(Color.WHITE);
+		btnPista.setFocusPainted(false);
+		panelControles.add(btnPista);
+		
 		// Event listeners para los botones
 		btnComprobar.addActionListener(e -> comprobarSolucion());
 		btnReiniciar.addActionListener(e -> reiniciarJuego());
 		btnNuevo.addActionListener(e -> nuevoJuego());
-		
-		
+		btnPista.addActionListener(e -> pedidoDeAyuda());		
 		
 		// Crear los botones de la grilla
 		crearBotonesGrilla(panelGrilla);		
@@ -205,8 +244,81 @@ public class VentanaJuego extends JFrame {
 		// Actualizar las pistas
 		actualizarPistas(solucion);
 		
+		encontrarAyudasRandom();
 		
 	}
+	
+	private void encontrarAyudasRandom() { 
+		ayudasDadas = 0;
+		actualizarAyudas();	
+		ayudas.removeAll(ayudas);
+		Random random = new Random();
+		int solucionRandom = 0;
+		crearGrillaAyuda();
+		int cantAyudasEncontradas = 0;		
+		while (cantAyudasEncontradas < size) {
+			int random1 = random.nextInt(size);
+			int random2 = random.nextInt(size);
+			solucionRandom = solucion[random1][random2];
+			if (solucionRandom == 1 && ayudas.size() == 0) {
+				List<Integer> subLista = new ArrayList<>();
+				subLista.add(random1);
+				subLista.add(random2);
+				ayudas.add(subLista);
+				cantAyudasEncontradas++;	
+			}
+			if (solucionRandom == 1) {	
+				boolean acum = false;
+				for (int i = 0 ; i < ayudas.size() ; i++) {
+					if(ayudas.get(i).get(0) == random1 && ayudas.get(i).get(1) == random2) 
+						acum = true;							
+				}
+				if (acum == false) {
+					List<Integer> subLista = new ArrayList<>();
+					subLista.add(random1);
+					subLista.add(random2);
+					ayudas.add(subLista);
+					cantAyudasEncontradas++;
+				}
+			}
+		}
+		
+	}
+
+	private void pedidoDeAyuda() {
+		if (ayudasDadas < size) {
+			List<Integer> lista = new ArrayList<>();
+			lista = ayudas.get(ayudasDadas);
+			botonesAyuda[lista.get(0)][lista.get(1)].setBackground(Color.BLACK);
+			ayudasDadas++;
+			actualizarAyudas();
+		}
+	}
+	
+	private void crearGrillaAyuda() { 
+		panelGrillaAyuda.removeAll();
+		//120 en vez de 90 para que este separado al menos 1 cuadrito de la grilla del juego, 
+		//y size*30 para que se adapte a los distintos tamaños grilla	
+		panelGrillaAyuda.setBounds(130 + (size * 40), 100, size * 40, size * 40);
+		panelGrillaAyuda.setBackground(Color.WHITE);
+		panelGrillaAyuda.setLayout(new GridLayout(size, size, 1, 1));
+		getContentPane().add(panelGrillaAyuda);
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {	
+				JButton btn = new JButton();
+				btn.setFont(new Font("Arial", Font.BOLD, 12));
+				btn.setFocusPainted(false);				
+				btn.setBackground(Color.WHITE);
+				botonesAyuda[i][j] = btn;
+				panelGrillaAyuda.add(btn);				
+			}
+		}
+	}
+	
+	private void actualizarAyudas() {
+		lblAyudas.setText("Ayudas usadas:" + ayudasDadas + "/" + size);
+	}
+	
 	
 	private void crearBotonesGrilla(JPanel panelGrilla) {
 		for (int i = 0; i < size; i++) {
@@ -232,61 +344,6 @@ public class VentanaJuego extends JFrame {
 			}
 		}
 	}
-	//---------------------------------------------------------------------------------------------------------------
-	//--------------------------------------------- DEBUG -----------------------------------------------------------
-	//---------------------------------------------------------------------------------------------------------------
-	private void crearGrillaDebug() { 
-		//120 en vez de 90 para que este separado al menos 1 cuadrito de la grilla del juego, 
-		//y size*30 para que se adapte a los distintos tamaños grilla
-		panelGrillaDebug.setBounds(120 + (size * 40), 90, size * 40, size * 40);
-		panelGrillaDebug.setBackground(Color.WHITE);
-		panelGrillaDebug.setLayout(new GridLayout(size, size, 1, 1));
-		getContentPane().add(panelGrillaDebug);
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {	
-				JButton btn = new JButton();
-				btn.setFont(new Font("Arial", Font.BOLD, 12));
-				btn.setFocusPainted(false);				
-				if (solucion[i][j] == 1) 
-					btn.setBackground(Color.BLACK);				
-				else 
-					btn.setBackground(Color.WHITE);
-				botonesDebug[i][j] = btn;
-				panelGrillaDebug.add(btn);				
-			}
-		}
-	}
-	
-	private void actualizarSolucionesDebug(int [][] solucion) {
-		panelGrillaDebug.removeAll();
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {	
-				JButton btn = new JButton();
-				btn.setFont(new Font("Arial", Font.BOLD, 12));
-				btn.setFocusPainted(false);				
-				if (solucion[i][j] == 1) 
-					btn.setBackground(Color.BLACK);				
-				else 
-					btn.setBackground(Color.WHITE);
-				botonesDebug[i][j] = btn;
-				panelGrillaDebug.add(btn);				
-			}
-		}
-	}
-	
-	private void limpiarBotonesDebug() {
-		// Limpiar el estado de todos los botones
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {
-				botonesDebug[i][j].setBackground(Color.WHITE);
-				botonesDebug[i][j].setText("");
-			}
-		}
-	}
-	
-	//---------------------------------------------------------------------------------------------------------------
-	//---------------------------------------------------------------------------------------------------------------
-	//---------------------------------------------------------------------------------------------------------------
 	
 	// Actualiza el estado de las celdas
 	private void actualizarBoton(JButton boton, Celda celda) {
@@ -341,7 +398,6 @@ public class VentanaJuego extends JFrame {
 	    panelFilas.repaint();
 	    panelColumnas.revalidate();
 	    panelColumnas.repaint();
-	    //Muestra la grilla de soluciones del modo debug ---------------------------------------------------------------------
 	}
 	
 	private void comprobarSolucion() {
@@ -406,6 +462,7 @@ public class VentanaJuego extends JFrame {
 				limpiarBotonesDebug();
 		    	actualizarSolucionesDebug(solucion);
 		    }
+			encontrarAyudasRandom();
 		}
 	}
 
@@ -453,4 +510,68 @@ public class VentanaJuego extends JFrame {
 		});
 		timer.start();
 	}
+	
+		//---------------------------------------------------------------------------------------------------------------
+		//--------------------------------------------- DEBUG -----------------------------------------------------------
+		//---------------------------------------------------------------------------------------------------------------
+		private void crearGrillaDebug() { 
+			//120 en vez de 90 para que este separado al menos 1 cuadrito de la grilla del juego, 
+			//y size*30 para que se adapte a los distintos tamaños grilla
+			if (size == 5) {				
+				panelGrillaDebug.setBounds(320 + (size * 50), 100, size * 40, size * 40);
+			}
+			if (size == 7) {
+				panelGrillaDebug.setBounds(380 + (size * 50), 100, size * 40, size * 40);
+			}
+			if (size == 10) {
+				panelGrillaDebug.setBounds(420 + (size * 55), 100, size * 40, size * 40);
+			}
+			panelGrillaDebug.setBackground(Color.WHITE);
+			panelGrillaDebug.setLayout(new GridLayout(size, size, 1, 1));
+			getContentPane().add(panelGrillaDebug);
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {	
+					JButton btn = new JButton();
+					btn.setFont(new Font("Arial", Font.BOLD, 12));
+					btn.setFocusPainted(false);				
+					if (solucion[i][j] == 1) 
+						btn.setBackground(Color.BLACK);				
+					else 
+						btn.setBackground(Color.WHITE);
+					botonesDebug[i][j] = btn;
+					panelGrillaDebug.add(btn);				
+				}
+			}
+		}
+		
+		private void actualizarSolucionesDebug(int [][] solucion) {
+			panelGrillaDebug.removeAll();
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {	
+					JButton btn = new JButton();
+					btn.setFont(new Font("Arial", Font.BOLD, 12));
+					btn.setFocusPainted(false);				
+					if (solucion[i][j] == 1) 
+						btn.setBackground(Color.BLACK);				
+					else 
+						btn.setBackground(Color.WHITE);
+					botonesDebug[i][j] = btn;
+					panelGrillaDebug.add(btn);				
+				}
+			}
+		}
+		
+		private void limpiarBotonesDebug() {
+			// Limpiar el estado de todos los botones
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					botonesDebug[i][j].setBackground(Color.WHITE);
+					botonesDebug[i][j].setText("");
+				}
+			}
+		}
+		
+		//---------------------------------------------------------------------------------------------------------------
+		//---------------------------------------------------------------------------------------------------------------
+		//---------------------------------------------------------------------------------------------------------------
 }
