@@ -48,7 +48,7 @@ public class VentanaJuego extends JFrame {
 	}
 	private JPanel panelGrillaDebug = new JPanel();;
 	private JButton[][] botonesDebug;
-	private boolean isDebugOn = false;
+	private boolean isDebugOn = true;
 	
 	private JPanel panelGrillaAyuda = new JPanel();;
 	private JButton[][] botonesAyuda;
@@ -82,7 +82,7 @@ public class VentanaJuego extends JFrame {
 		this.botonesDebug = new JButton[size][size];
 		this.botonesAyuda = new JButton[size][size];
 		
-		setTitle("Nanograma - " + size + "x" + size);
+		setTitle("Nonograma");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		if (size == 5) {
 			if (isDebugOn)
