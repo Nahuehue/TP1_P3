@@ -348,7 +348,7 @@ public class VentanaJuego extends JFrame {
 	// Actualiza el estado de las celdas
 	private void actualizarBoton(JButton boton, Celda celda) {
 		if (celda.getEstado() == Celda.BLANCO) {
-			boton.setBackground(Color.WHITE);
+			boton.setBackground(Color.LIGHT_GRAY);
 			boton.setText("");
 		} else if (celda.getEstado() == Celda.NEGRO) {
 			boton.setBackground(Color.BLACK);
